@@ -1,0 +1,64 @@
+/* Full gradient background for Product section */
+.p-page {
+  display: flex;
+  justify-content: center; /* center boxes */
+  gap: 50px;
+  flex-wrap: wrap;
+  margin-top: 50px;
+  padding: 0 20px; /* horizontal padding only */
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+}
+
+/* Glassy product boxes */
+.product-box {
+  margin-bottom: 20px;
+  width: 220px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.1); /* semi-transparent glass */
+  backdrop-filter: blur(15px);
+  border: 2px solid white;
+  border-radius: 20px; /* Rounded edges */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  margin: 50px 50px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+/* Hover effect: lift and shadow */
+.product-box:hover {
+  transform: translateY(-10px) rotateX(5deg);
+  box-shadow: 0 20px 40px rgba(255, 0, 0, 0.3);
+}
+
+/* Floating images above box (cover page) */
+.product-box img {
+  width: 225px;      /* ~50% bigger than original 150px */
+  height: 225px;     /* ~50% bigger */
+  margin-top: -75px; /* keep ~20% floating above box */
+  object-fit: contain;
+  border-radius: 15px;
+  transition: transform 0.3s;
+}
+
+/* Optional hover zoom effect */
+.product-box img:hover {
+  transform: scale(1.05);
+}
+/* Button inside box */
+.buy-button button {
+  margin-top: 50px;
+  padding: 12px 25px;
+  border: 2px solid #ff1a1a;
+  background: transparent;
+  color: white;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: monospace;
+  transition: 0.3s;
+}
+
+.buy-button button:hover {
+  background: linear-gradient(45deg, #ff1a1a, #ff4d4d);
+}
