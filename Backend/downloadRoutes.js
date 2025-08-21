@@ -2,8 +2,8 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import path from "path";
-import { getProduct } from "./products.js";
-import { usedTokens } from "../store.js";
+import { PRODUCTS } from "./product.js";
+import { usedTokens } from "./store.js";
 import { fileURLToPath } from "url";
 
 const router = express.Router();

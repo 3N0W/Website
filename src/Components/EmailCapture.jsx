@@ -1,14 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import "./EmailCapture.css";
 
 function EmailCapture({ onSubmit }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
+  // Load saved info from localStorage on mount
+  useEffect(() => {
+    const savedName = localStorage.getItem("buyer_name");
+    const savedEmail = localStorage.getItem("buyer_email");
+    if (savedName) setName(savedName);
+    if (savedEmail) setEmail(savedEmail);
+  }, []);
+
+  // Email validation regex
+  const validateEmail = (email) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name || !email) return alert("Fill all fields");
+
+    if (!name.trim() || !email.trim()) {
+      toast.error("Fill in all fields", { position: "bottom-center" });
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      toast.error("Invalid email format", { position: "bottom-center" });
+      return;
+    }
+
+    // Save to localStorage
+    localStorage.setItem("buyer_name", name);
+    localStorage.setItem("buyer_email", email);
+
     onSubmit({ name, email });
+    toast.success("Info saved", { position: "bottom-center" });
   };
 
   return (

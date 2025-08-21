@@ -6,16 +6,17 @@ function App() {
   const productRef = useRef(null);
 
   const handleGoNow = () => {
-    // Scroll to ProductPage smoothly
-    productRef.current.scrollIntoView({ behavior: "smooth" });
+    if (productRef.current) {
+      productRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
     <>
       <HomePage onGoNow={handleGoNow} />
-      <div ref={productRef}>
+      <main ref={productRef}>
         <ProductPage />
-      </div>
+      </main>
     </>
   );
 }
