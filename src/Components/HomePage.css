@@ -18,7 +18,7 @@
   backdrop-filter: blur(12px);
   border-radius: 50px;
   text-align: center;
-  z-index: 10; /* ensure above video */
+  z-index: 10;
   border: 2px solid #fff;
   box-shadow: 0 0 15px rgba(255, 26, 26, 0.5);
 }
@@ -43,22 +43,21 @@
   filter: brightness(0.6);
 }
 
-/* Center button container */
+/* Center button */
 .center-button {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 20; /* higher than video + navbar */
+  z-index: 20;
 }
 
-/* Button styling */
 .center-button button {
   padding: 14px 40px;
   font-size: 18px;
   font-weight: bold;
   color: white;
-  background: rgba(255, 26, 26, 0.8); /* visible red */
+  background: rgba(255, 26, 26, 0.8);
   border: 2px solid #fff;
   border-radius: 10px;
   cursor: pointer;

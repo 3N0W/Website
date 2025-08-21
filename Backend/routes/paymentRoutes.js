@@ -7,7 +7,9 @@ import {
   addPayment,
   updatePayment,
   getPayment,
-  getPaymentByToken
+  getPaymentByToken,
+  addAffiliateSale,
+  getAffiliateByCode
 } from "../db.js";
 
 export default function paymentRoutes(razorpay) {
@@ -22,12 +24,19 @@ export default function paymentRoutes(razorpay) {
   // ----------- CREATE ORDER -----------
   router.post("/create-order", async (req, res) => {
     try {
-      const { productId, buyer } = req.body || {};
-      if (!productId || !PRODUCTS[productId]) {
+      const { productId, buyer, affiliate } = req.body || {};
+      if (!productId || !PRODUCTS[productId])
         return res.status(400).json({ error: "Invalid productId" });
-      }
 
       const product = PRODUCTS[productId];
+
+      // ✅ Validate affiliate code
+      let affiliateCode = null;
+      if (affiliate) {
+        const aff = getAffiliateByCode(affiliate);
+        if (aff) affiliateCode = aff.code; // only attach if real
+      }
+
       const order = await razorpay.orders.create({
         amount: product.price * 100,
         currency: "INR",
@@ -35,7 +44,8 @@ export default function paymentRoutes(razorpay) {
         notes: {
           productId,
           buyerEmail: buyer?.email || "",
-          buyerName: buyer?.name || ""
+          buyerName: buyer?.name || "",
+          affiliate: affiliateCode
         }
       });
 
@@ -44,14 +54,11 @@ export default function paymentRoutes(razorpay) {
         product_id: productId,
         email: buyer?.email || "",
         status: "pending",
+        affiliate: affiliateCode,
         created_at: new Date().toISOString()
       });
 
-      return res.json({
-        id: order.id,
-        amount: order.amount,
-        currency: order.currency
-      });
+      return res.json({ id: order.id, amount: order.amount, currency: order.currency });
     } catch (err) {
       console.error("Create-order error:", err);
       return res.status(500).json({ error: "Failed to create order" });
@@ -62,23 +69,19 @@ export default function paymentRoutes(razorpay) {
   router.post("/verify", (req, res) => {
     try {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
-      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
         return res.status(400).json({ success: false, error: "Missing fields" });
-      }
 
       const expected = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest("hex");
 
-      if (expected !== razorpay_signature) {
+      if (expected !== razorpay_signature)
         return res.status(400).json({ success: false, error: "Invalid signature" });
-      }
 
       const record = getPayment(razorpay_order_id);
-      if (!record) {
-        return res.status(400).json({ success: false, error: "Unknown order" });
-      }
+      if (!record) return res.status(400).json({ success: false, error: "Unknown order" });
 
       const token = crypto.randomBytes(20).toString("hex");
 
@@ -89,11 +92,15 @@ export default function paymentRoutes(razorpay) {
         token
       });
 
-      const apiBase = process.env.NODE_ENV === "production"
-        ? ""
-        : `http://localhost:${process.env.PORT || 5000}`;
+      // ----------- Affiliate Tracking -----------
+      if (record.affiliate) {
+        const productPrice = PRODUCTS[record.product_id].price;
+        addAffiliateSale(record.affiliate, productPrice);
+      }
 
-      const product = PRODUCTS[record.product_id];
+      const apiBase = process.env.NODE_ENV === "production"
+        ? "" // assume same domain
+        : `http://localhost:${process.env.PORT || 5000}`;
       const downloadUrl = `${apiBase}/api/payment/download/${record.product_id}?token=${token}`;
 
       return res.json({ success: true, downloadUrl });
@@ -113,7 +120,6 @@ export default function paymentRoutes(razorpay) {
       const record = getPaymentByToken(productId, token);
       if (!record) return res.status(403).send("Invalid or expired link");
 
-      // clear token and mark as delivered
       updatePayment(record.order_id, { token: "", status: "delivered" });
 
       const __filename = fileURLToPath(import.meta.url);

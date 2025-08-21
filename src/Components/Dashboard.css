@@ -1,0 +1,86 @@
+/* src/Components/Dashboard.css */
+
+body {
+  background-color: #0a0a0a;
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #fff;
+}
+
+.dashboard-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: #ff1a1a;
+}
+
+button {
+  background: linear-gradient(135deg, #ff1a1a, #b30000);
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #fff;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #ff3333, #cc0000);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 25px;
+  background: #111;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(255, 26, 26, 0.2);
+}
+
+thead {
+  background: #1a1a1a;
+}
+
+thead th {
+  padding: 14px;
+  text-align: left;
+  font-weight: 600;
+  color: #ff4d4d;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #222;
+  font-size: 0.95rem;
+}
+
+tbody tr:hover {
+  background: #191919;
+}
+
+a {
+  color: #ff4d4d;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

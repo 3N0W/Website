@@ -17,10 +17,8 @@ function HomePage({ onGoNow }) {
       </video>
 
       {/* Overlay Content */}
-      <div className="overlay">
-        <button className="go-now-btn" onClick={onGoNow}>
-          Go Now →
-        </button>
+      <div className="center-button">
+        <button onClick={onGoNow}>Go Now →</button>
       </div>
     </div>
   );

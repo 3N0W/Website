@@ -1,174 +1,100 @@
-// src/Components/ProductPage.jsx
-import React, { useEffect, useState, useRef } from "react";
-import EmailCapture from "./EmailCapture";
-import "./ProductPage.css";
-import toast, { Toaster } from "react-hot-toast";
-import prod1Img from "../Images/prod1.png";
-import prod2Img from "../Images/prod2.png";
+import express from "express";
+import crypto from "crypto";
+import path from "path";
+import { fileURLToPath } from "url";
+import { addPayment, updatePayment, getPayment, getPaymentByToken } from "../db.js";
 
-const productImages = {
-  prod_1: prod1Img,
-  prod_2: prod2Img,
-};
+export default function paymentRoutes(razorpay) {
+  const router = express.Router();
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
-const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY || "rzp_test_R6bB1GOrVnKh8K";
-
-export default function ProductPage() {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("user");
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [products, setProducts] = useState([]);
-  const [loadingProduct, setLoadingProduct] = useState(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const isMounted = useRef(true);
-
-  useEffect(() => () => { isMounted.current = false; }, []);
-  useEffect(() => { if (user) localStorage.setItem("user", JSON.stringify(user)); }, [user]);
-
-  // Fetch products
-  useEffect(() => {
-  (async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/products`);
-      const data = await res.json();
-      if (Array.isArray(data)) setProducts(data);
-      else setProducts([]); // fallback
-    } catch {
-      setProducts([]); // fallback
-    }
-  })();
-}, []);
-
-  // Razorpay script
-  useEffect(() => {
-    if (window.Razorpay) return setScriptLoaded(true);
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => { if (isMounted.current) setScriptLoaded(true); };
-    script.onerror = () => toast.error("Payment gateway failed to load.", { style: toastStyle(), position: "bottom-center" });
-    document.body.appendChild(script);
-  }, []);
-
-  const toastStyle = (overrides = {}) => ({
-    borderRadius: "12px",
-    background: "#0f0f11",
-    color: "#e6eef0",
-    padding: "12px 16px",
-    boxShadow: "0 6px 20px rgba(0,0,0,0.6)",
-    ...overrides
-  });
-
-  async function createOrder(productId) {
-    const res = await fetch(`${API_BASE}/api/payment/create-order`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId, buyer: { name: user.name, email: user.email } })
-    });
-    if (!res.ok) throw new Error(await safeJsonError(res));
-    return res.json();
-  }
-
-  async function verifyPayment(response) {
-    const res = await fetch(`${API_BASE}/api/payment/verify`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(response)
-    });
-    if (!res.ok) throw new Error(await safeJsonError(res));
-    return res.json();
-  }
-
-  async function safeJsonError(res) {
-    try {
-      const data = await res.json();
-      return data?.error || data?.message || JSON.stringify(data);
-    } catch {
-      return `${res.status} ${res.statusText}`;
-    }
-  }
-
-  const handlePayment = async (product) => {
-    if (!user) return toast.error("Enter your name and email first.", { style: toastStyle(), position: "bottom-center" });
-    if (!scriptLoaded) return toast.error("Payment gateway still loading.", { style: toastStyle(), position: "bottom-center" });
-
-    setLoadingProduct(product.id);
-
-    try {
-      const order = await createOrder(product.id);
-      if (!order?.id) throw new Error("Invalid order response");
-
-      const options = {
-        key: RAZORPAY_KEY,
-        amount: order.amount,
-        currency: order.currency || "INR",
-        name: "Snow Storm Products",
-        description: product.name,
-        order_id: order.id,
-        prefill: { name: user.name, email: user.email },
-        theme: { color: "#ff1a1a" },
-        handler: async (razorpayResponse) => {
-          toast.loading("Verifying payment...", { id: "verify", style: toastStyle(), position: "bottom-center" });
-          try {
-            const verifyData = await verifyPayment(razorpayResponse);
-            toast.dismiss("verify");
-            if (verifyData.success && verifyData.downloadUrl) {
-              toast.success("Payment verified — starting download", { style: { ...toastStyle(), color: "#bfffbf" }, position: "bottom-center" });
-              window.location.href = verifyData.downloadUrl;
-            } else {
-              toast.error("Payment verification failed.", { style: toastStyle(), position: "bottom-center" });
-              console.error("Verify failed:", verifyData);
-            }
-          } catch (err) {
-            toast.dismiss("verify");
-            toast.error(err.message || "Verification error", { style: toastStyle(), position: "bottom-center" });
-            console.error("Verification error:", err);
-          } finally { if (isMounted.current) setLoadingProduct(null); }
-        },
-        modal: {
-          ondismiss: () => { if (isMounted.current) setLoadingProduct(null); toast("Checkout closed", { icon: "✖️", style: toastStyle(), position: "bottom-center" }); }
-        }
-      };
-
-      new window.Razorpay(options).open();
-    } catch (err) {
-      console.error("Payment flow error:", err);
-      toast.error(err.message || "Payment setup failed", { style: toastStyle(), position: "bottom-center" });
-      setLoadingProduct(null);
-    }
+  const PRODUCTS = {
+    prod_1: { id: "prod_1", name: "Product 1", price: 299, file: "product-1.pdf" },
+    prod_2: { id: "prod_2", name: "Product 2", price: 299, file: "product-2.pdf" },
   };
 
-  return (
-    <div className="product-page-root">
-      <Toaster />
-      {!user && <EmailCapture onSubmit={setUser} />}
-      <div className="p-page">
-        {products.length === 0 && <p style={{ color: "#fff" }}>Loading products...</p>}
-        {products.map((product) => (
-          <div className="product-box" key={product.id}>
-  <img
-  src={productImages[product.id] || "https://via.placeholder.com/150"}
-  alt={product.name}
-  className="product-img"
-/>
-            <div className="product-meta">
-              <h3>{product.name}</h3>
-              <p className="price">₹{product.price}</p>
-            </div>
-            <div className="buy-button">
-              <button
-                className="collect-btn"
-                onClick={() => handlePayment(product)}
-                disabled={loadingProduct === product.id}
-              >
-                {loadingProduct === product.id ? "Processing…" : "Collect Now"}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  // CREATE ORDER
+  router.post("/create-order", async (req, res) => {
+    try {
+      const { productId, buyer } = req.body || {};
+      if (!productId || !PRODUCTS[productId]) return res.status(400).json({ error: "Invalid productId" });
+
+      const product = PRODUCTS[productId];
+
+      const order = await razorpay.orders.create({
+        amount: product.price * 100,
+        currency: "INR",
+        receipt: `rcpt_${Date.now()}_${productId}`,
+      });
+
+      addPayment({
+        order_id: order.id,
+        product_id: productId,
+        email: buyer?.email || "",
+        status: "pending",
+        created_at: new Date().toISOString(),
+      });
+
+      res.json({ id: order.id, amount: order.amount, currency: order.currency });
+    } catch (err) {
+      console.error("Create order error:", err);
+      res.status(500).json({ error: "Failed to create order" });
+    }
+  });
+
+  // VERIFY PAYMENT
+  router.post("/verify", (req, res) => {
+    try {
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
+        return res.status(400).json({ success: false, error: "Missing fields" });
+
+      const expected = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest("hex");
+
+      if (expected !== razorpay_signature) return res.status(400).json({ success: false, error: "Invalid signature" });
+
+      const record = getPayment(razorpay_order_id);
+      if (!record) return res.status(400).json({ success: false, error: "Unknown order" });
+
+      const token = crypto.randomBytes(20).toString("hex");
+      updatePayment(razorpay_order_id, { payment_id: razorpay_payment_id, signature: razorpay_signature, status: "verified", token });
+
+      const apiBase = process.env.NODE_ENV === "production" ? "" : `http://<YOUR_PHONE_IP>:${process.env.PORT || 5000}`;
+      const product = PRODUCTS[record.product_id];
+      const downloadUrl = `${apiBase}/api/payment/download/${record.product_id}?token=${token}`;
+
+      res.json({ success: true, downloadUrl });
+    } catch (err) {
+      console.error("Verify payment error:", err);
+      res.status(500).json({ success: false, error: "Verification failed" });
+    }
+  });
+
+  // DOWNLOAD FILE
+  router.get("/download/:productId", (req, res) => {
+    try {
+      const { productId } = req.params;
+      const { token } = req.query;
+      if (!productId || !token) return res.status(400).send("Missing params");
+
+      const record = getPaymentByToken(productId, token);
+      if (!record) return res.status(403).send("Invalid or expired link");
+
+      updatePayment(record.order_id, { token: "", status: "delivered" });
+
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const SECURE_DIR = path.resolve(__dirname, "..", "secure-files");
+      const filePath = path.join(SECURE_DIR, PRODUCTS[productId].file);
+
+      res.download(filePath, PRODUCTS[productId].file);
+    } catch (err) {
+      console.error("Download error:", err);
+      res.status(500).send("Failed to process download");
+    }
+  });
+
+  return router;
 }
