@@ -4,8 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import HomePage from "./Components/Home";
 import ProductPage from "./Components/ProductPage";
 import Contact from "./Compoments/Contact";
-import RefundPolicy from "./Componenets/RefundPolicy";
-import Terms from "./Componenets/Terms";
+import RefundPolicy from "./Components/RefundPolicy";
+import Terms from "./Components/Terms";
 
 function App() {
   const productRef = useRef(null);
