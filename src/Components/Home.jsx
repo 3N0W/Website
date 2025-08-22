@@ -7,7 +7,9 @@ function HomePage({ onGoNow }) {
     <div className="home-container">
       {/* Navbar */}
       <nav className="navbar">
-        <h1 className="brand">Snow Strom</h1>
+        <a href="/" className="brand">
+          <h1>Snow Strom</h1>
+        </a>
       </nav>
 
       {/* Background Video */}

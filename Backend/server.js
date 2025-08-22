@@ -2,12 +2,12 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import Razorpay from "razorpay";
+
 import paymentRoutes from "./routes/paymentRoutes.js";
 import productRoutes from "./product.js";
 import downloadRoutes from "./downloadRoutes.js";
 import affiliateRoutes from "./routes/affiliateRoutes.js";
 
-app.use("/api/affiliate", affiliateRoutes);
 dotenv.config();
 
 const app = express();
@@ -24,6 +24,7 @@ const razorpay = new Razorpay({
 app.use("/api/payment", paymentRoutes(razorpay));
 app.use("/api/products", productRoutes);
 app.use("/api/download", downloadRoutes);
+app.use("/api/affiliate", affiliateRoutes()); // <-- FIX: call the function since it's exported that way
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
