@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./ProductPage.css"
 
 export default function ProductPage() {
   const [loading, setLoading] = useState(false);

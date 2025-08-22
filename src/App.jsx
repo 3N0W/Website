@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 
 import HomePage from "./Components/Home";
+import EmailCapture from "./Components/EmailCapture";
 import ProductPage from "./Components/ProductPage";
 import Contact from "./Components/Contact";
 import RefundPolicy from "./Components/RefundPolicy";
@@ -26,6 +27,7 @@ function App() {
             <>
               <HomePage onGoNow={handleGoNow} />
               <main ref={productRef}>
+                <EmailCapture />
                 <ProductPage />
               </main>
               <footer className="p-4 text-center text-gray-400">
