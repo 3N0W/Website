@@ -6,27 +6,24 @@
   margin: 50px auto;
   width: 90%;
   max-width: 400px;
-  background: rgba(255, 255, 255, 0.05); /* glass effect */
-  backdrop-filter: blur(20px);
-  border: 2px solid white;
-  border-radius: 25px;
   padding: 30px 20px;
-
-  /* Dark gradient background to match video theme */
-  background-image: linear-gradient(
-    135deg,
-    rgba(15, 12, 41, 0.6),
-    rgba(48, 43, 99, 0.6),
-    rgba(36, 36, 62, 0.6)
-  );
+  border-radius: 25px;
+  border: 2px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(20px);
+  background: rgba(15,12,41,0.6);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.email-capture:hover {
+  transform: scale(1.02);
 }
 
 .email-capture input {
   width: 90%;
   padding: 12px;
   border-radius: 15px;
-  border: 1px solid white;
+  border: 1px solid rgba(255,255,255,0.3);
   background: rgba(255, 255, 255, 0.05);
   color: white;
   font-family: monospace;
@@ -55,7 +52,6 @@
   color: black;
 }
 
-/* Responsive */
 @media (max-width: 480px) {
   .email-capture {
     width: 95%;

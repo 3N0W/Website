@@ -1,5 +1,6 @@
-/* Root wrapper */
-.p-6 {
+/* src/Components/ProductPage.css */
+
+.product-page-root {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
   padding: 40px 20px;
@@ -10,24 +11,27 @@
   align-items: center;
 }
 
-/* Products grid */
-.grid.grid-cols-2.gap-6 {
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #ff1a1a;
+}
+
+.products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 50px;
   width: 100%;
   max-width: 1200px;
-  margin-top: 40px;
 }
 
-/* Individual product card */
-.border.p-4.rounded-lg.shadow {
-  position: relative;
+.product-card {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(18px) saturate(140%);
   border: 1.5px solid rgba(255, 255, 255, 0.25);
   border-radius: 24px;
-  padding: 20px 15px 30px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,15 +39,32 @@
   cursor: pointer;
 }
 
-.border.p-4.rounded-lg.shadow:hover {
+.product-card:hover {
   transform: translateY(-12px) scale(1.02);
   box-shadow: 0 18px 36px rgba(255, 0, 0, 0.35);
   border: 1.5px solid rgba(255, 26, 26, 0.6);
 }
 
-/* Buy button */
-.bg-blue-500.text-white.px-4.py-2.rounded {
-  margin-top: auto;
+.product-image {
+  width: 100%;
+  max-width: 200px;
+  margin-bottom: 15px;
+  border-radius: 15px;
+}
+
+.product-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.product-price {
+  margin-bottom: 15px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.buy-button {
   padding: 12px 28px;
   font-size: 0.95rem;
   font-weight: 600;
@@ -53,50 +74,36 @@
   color: #fff;
   letter-spacing: 0.6px;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
-.bg-blue-500.text-white.px-4.py-2.rounded:hover:not(:disabled) {
+.buy-button:hover:not(:disabled) {
   background: linear-gradient(135deg, #ff1a1a, #ff4d4d);
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(255, 0, 0, 0.4);
 }
 
-.bg-blue-500.text-white.px-4.py-2.rounded:disabled {
+.buy-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* Download button */
-.bg-green-500.text-white.px-4.py-2.rounded {
-  margin-top: 20px;
+.download-section {
+  margin-top: 30px;
+}
+
+.download-button {
   padding: 12px 28px;
   font-size: 0.95rem;
   font-weight: 600;
   border-radius: 14px;
   background: linear-gradient(135deg, #28a745, #71db85);
   color: #fff;
-  letter-spacing: 0.6px;
+  text-decoration: none;
   transition: all 0.3s ease;
 }
 
-.bg-green-500.text-white.px-4.py-2.rounded:hover {
+.download-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0, 128, 0, 0.4);
-}
-
-/* Text styling */
-.text-2xl.font-bold.mb-4 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.text-lg.font-semibold {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.mb-2 {
-  margin-bottom: 8px;
 }

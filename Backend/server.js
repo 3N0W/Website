@@ -12,7 +12,11 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: process.env.ALLOWED_ORIGIN || "*" }));
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGIN || "*", // allow all or limit in production
+  })
+);
 
 // Razorpay instance
 const razorpay = new Razorpay({
@@ -20,11 +24,14 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Routes
-app.use("/api/payment", paymentRoutes(razorpay));
-app.use("/api/products", productRoutes);
-app.use("/api/download", downloadRoutes);
-app.use("/api/affiliate", affiliateRoutes()); // <-- FIX: call the function since it's exported that way
+// ----------- Routes -----------
+app.use("/api/payment", paymentRoutes(razorpay)); // pass Razorpay instance
+app.use("/api/products", productRoutes);          // products list
+app.use("/api/download", downloadRoutes);         // secure download
+app.use("/api/affiliate", affiliateRoutes());     // function call, not reference
+
+// Optional: serve static images
+app.use("/Images", express.static("src/Images"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

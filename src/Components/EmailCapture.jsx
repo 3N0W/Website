@@ -6,7 +6,7 @@ function EmailCapture({ onSubmit }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // Load saved info from localStorage on mount
+  // Load saved info from localStorage
   useEffect(() => {
     const savedName = localStorage.getItem("buyer_name");
     const savedEmail = localStorage.getItem("buyer_email");
@@ -14,24 +14,20 @@ function EmailCapture({ onSubmit }) {
     if (savedEmail) setEmail(savedEmail);
   }, []);
 
-  // Email validation regex
   const validateEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!name.trim() || !email.trim()) {
       toast.error("Fill in all fields", { position: "bottom-center" });
       return;
     }
-
     if (!validateEmail(email)) {
       toast.error("Invalid email format", { position: "bottom-center" });
       return;
     }
 
-    // Save to localStorage
     localStorage.setItem("buyer_name", name);
     localStorage.setItem("buyer_email", email);
 
@@ -46,6 +42,7 @@ function EmailCapture({ onSubmit }) {
         placeholder="Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
+        autoFocus
         required
       />
       <input

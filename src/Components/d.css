@@ -1,0 +1,56 @@
+/* Headings */
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+/* Paragraphs */
+p {
+  margin-bottom: 16px;
+  font-size: 1rem;
+  color: #fafaf;
+  line-height: 1.7;
+}
+
+/* Links */
+a {
+  color: #ff4d4d;
+  text-decoration: underline;
+  transition: color 0.3s;
+}
+
+a:hover {
+  color: #ff1a1a;
+}
+
+/* Lists */
+ul {
+  list-style: disc;
+  padding-left: 20px;
+  margin-bottom: 16px;
+}
+
+li {
+  margin-bottom: 8px;
+}
+
+/* Small text */
+.text-sm {
+  font-size: 0.875rem;
+  color: rgba(67,67,67,0.8);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  p,
+  li {
+    font-size: 0.95rem;
+  }
+}

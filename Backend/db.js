@@ -1,94 +1,65 @@
 import fs from "fs";
 import path from "path";
 
-const paymentsFile = path.resolve(process.cwd(), "Backend", "payments.json");
-const affiliatesFile = path.resolve(process.cwd(), "Backend", "affiliates.json");
+const DB_FILE = path.resolve("./Backend/db.json");
 
-// ----------- Payments Helpers -----------
-function loadPayments() {
-  if (!fs.existsSync(paymentsFile)) return [];
+// Load or initialize DB
+let db = { affiliates: [], payments: [] };
+if (fs.existsSync(DB_FILE)) {
   try {
-    return JSON.parse(fs.readFileSync(paymentsFile, "utf8"));
+    db = JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
   } catch (e) {
-    console.error("⚠️ Failed to read payments.json:", e);
-    return [];
+    console.error("Failed to parse db.json, initializing new DB.");
   }
 }
 
-function savePayments(payments) {
-  fs.writeFileSync(paymentsFile, JSON.stringify(payments, null, 2));
+// --- Save helper ---
+const saveDB = () => fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+
+// --- Affiliates ---
+export function getAffiliates() {
+  return db.affiliates;
 }
 
-// ----------- Affiliates Helpers -----------
-function loadAffiliates() {
-  if (!fs.existsSync(affiliatesFile)) return [];
-  try {
-    return JSON.parse(fs.readFileSync(affiliatesFile, "utf8"));
-  } catch (e) {
-    console.error("⚠️ Failed to read affiliates.json:", e);
-    return [];
-  }
-}
-
-function saveAffiliates(data) {
-  fs.writeFileSync(affiliatesFile, JSON.stringify(data, null, 2));
-}
-
-// ----------- Payments API -----------
-export function addPayment(record) {
-  const payments = loadPayments();
-  payments.push(record);
-  savePayments(payments);
-}
-
-export function updatePayment(orderId, updates) {
-  const payments = loadPayments();
-  const idx = payments.findIndex((p) => p.order_id === orderId);
-  if (idx !== -1) {
-    payments[idx] = { ...payments[idx], ...updates };
-    savePayments(payments);
-  }
-}
-
-export function getPayment(orderId) {
-  return loadPayments().find((p) => p.order_id === orderId) || null;
-}
-
-export function getPaymentByToken(productId, token) {
-  return (
-    loadPayments().find(
-      (p) => p.product_id === productId && p.token === token && p.status === "verified"
-    ) || null
-  );
-}
-
-// ----------- Affiliate API -----------
 export function addAffiliate(name) {
-  const data = loadAffiliates();
-  const code = Math.random().toString(36).substring(2, 8);
-  if (!data.find((a) => a.code === code)) {
-    data.push({ name, code, sales: 0, revenue: 0 });
-  }
-  saveAffiliates(data);
+  const code = `aff_${Math.random().toString(36).substring(2, 8)}`;
+  const newAff = { name, code, sales: 0, revenue: 0 };
+  db.affiliates.push(newAff);
+  saveDB();
   return code;
 }
 
-export function addAffiliateSale(code, amount) {
-  const data = loadAffiliates();
-  const aff = data.find((a) => a.code === code);
-  if (aff) {
-    aff.sales++;
-    aff.revenue += amount;
-    saveAffiliates(data);
-    return aff;
-  }
-  return null;
-}
-
 export function getAffiliateByCode(code) {
-  return loadAffiliates().find((a) => a.code === code) || null;
+  return db.affiliates.find((a) => a.code === code);
 }
 
-export function getAffiliates() {
-  return loadAffiliates();
+export function addAffiliateSale(code, amount) {
+  const aff = getAffiliateByCode(code);
+  if (!aff) return null;
+  aff.sales += 1;
+  aff.revenue += amount;
+  saveDB();
+  return aff;
+}
+
+// --- Payments ---
+export function addPayment(payment) {
+  db.payments.push(payment);
+  saveDB();
+}
+
+export function updatePayment(orderId, updates) {
+  const record = db.payments.find((p) => p.order_id === orderId);
+  if (!record) return null;
+  Object.assign(record, updates);
+  saveDB();
+  return record;
+}
+
+export function getPayment(orderId) {
+  return db.payments.find((p) => p.order_id === orderId);
+}
+
+export function getPaymentByToken(productId, token) {
+  return db.payments.find((p) => p.product_id === productId && p.token === token);
 }

@@ -1,6 +1,6 @@
-// src/Components/Dashboard.jsx
 import React, { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import "./Dashboard.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 const ADMIN_TOKEN_KEY = "affiliate_admin_token";
@@ -56,7 +56,7 @@ export default function Dashboard() {
       });
       const data = await res.json();
       if (data?.code) {
-        toast.success(`Affiliate link created: snowstrom.shop/${data.code}`);
+        toast.success(`Affiliate link created: https://snowstrom.shop/${data.code}`);
         fetchAffiliates();
       } else {
         toast.error(data.error || "Failed to create affiliate");
@@ -73,29 +73,16 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div style={{ padding: "20px", color: "#fff" }}>
-      <Toaster />
+    <div className="dashboard-container">
+      <Toaster position="top-right" />
       <h1>Affiliate Dashboard</h1>
-      <button
-        onClick={createAffiliate}
-        style={{
-          padding: "10px 15px",
-          marginBottom: "20px",
-          background: "#ff1a1a",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-          color: "#fff",
-        }}
-      >
-        Create New Affiliate
+      <button onClick={createAffiliate} disabled={loading}>
+        {loading ? "Processing..." : "Create New Affiliate"}
       </button>
 
-      {loading && <p>Loading...</p>}
-
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <table>
         <thead>
-          <tr style={{ borderBottom: "1px solid #fff" }}>
+          <tr>
             <th>Name</th>
             <th>Link</th>
             <th>Total Sales</th>
@@ -103,15 +90,21 @@ export default function Dashboard() {
           </tr>
         </thead>
         <tbody>
+          {affiliates.length === 0 && (
+            <tr>
+              <td colSpan={4} style={{ textAlign: "center", padding: "20px" }}>
+                No affiliates yet
+              </td>
+            </tr>
+          )}
           {affiliates.map((aff) => (
-            <tr key={aff.code} style={{ borderBottom: "1px solid #444" }}>
+            <tr key={aff.code}>
               <td>{aff.name}</td>
               <td>
                 <a
                   href={`https://snowstrom.shop/${aff.code}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: "#ff1a1a" }}
                 >
                   snowstrom.shop/{aff.code}
                 </a>

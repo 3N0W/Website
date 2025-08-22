@@ -9,7 +9,7 @@ import {
   getPayment,
   getPaymentByToken,
   addAffiliateSale,
-  getAffiliateByCode
+  getAffiliateByCode,
 } from "../db.js";
 
 export default function paymentRoutes(razorpay) {
@@ -17,51 +17,38 @@ export default function paymentRoutes(razorpay) {
 
   // ----------- Product Catalog -----------
   const PRODUCTS = {
-    "prod_1": { id: "prod_1", name: "Product 1", price: 299, file: "product-1.pdf" },
-    "prod_2": { id: "prod_2", name: "Product 2", price: 299, file: "product-2.pdf" }
+    prod_1: { id: "prod_1", name: "Product 1", price: 299, file: "prod1.pdf", image: "/Images/prod1.png" },
+    prod_2: { id: "prod_2", name: "Product 2", price: 299, file: "prod2.pdf", image: "/Images/prod2.png" },
   };
 
   // ----------- CREATE ORDER -----------
   router.post("/create-order", async (req, res) => {
     try {
       const { productId, buyer, affiliate } = req.body || {};
-      if (!productId || !PRODUCTS[productId])
-        return res.status(400).json({ error: "Invalid productId" });
+      if (!productId || !PRODUCTS[productId]) return res.status(400).json({ success: false, error: "Invalid productId" });
 
       const product = PRODUCTS[productId];
 
-      // ✅ Validate affiliate code
+      // Validate affiliate
       let affiliateCode = null;
       if (affiliate) {
         const aff = getAffiliateByCode(affiliate);
-        if (aff) affiliateCode = aff.code; // only attach if real
+        if (aff) affiliateCode = aff.code;
       }
 
       const order = await razorpay.orders.create({
         amount: product.price * 100,
         currency: "INR",
         receipt: `rcpt_${Date.now()}_${productId}`,
-        notes: {
-          productId,
-          buyerEmail: buyer?.email || "",
-          buyerName: buyer?.name || "",
-          affiliate: affiliateCode
-        }
+        notes: { productId, buyerEmail: buyer?.email || "", buyerName: buyer?.name || "", affiliate: affiliateCode },
       });
 
-      addPayment({
-        order_id: order.id,
-        product_id: productId,
-        email: buyer?.email || "",
-        status: "pending",
-        affiliate: affiliateCode,
-        created_at: new Date().toISOString()
-      });
+      addPayment({ order_id: order.id, product_id: productId, email: buyer?.email || "", status: "pending", affiliate: affiliateCode, created_at: new Date().toISOString() });
 
-      return res.json({ id: order.id, amount: order.amount, currency: order.currency });
+      res.json({ success: true, data: { id: order.id, amount: order.amount, currency: order.currency } });
     } catch (err) {
       console.error("Create-order error:", err);
-      return res.status(500).json({ error: "Failed to create order" });
+      res.status(500).json({ success: false, error: "Failed to create order" });
     }
   });
 
@@ -72,41 +59,29 @@ export default function paymentRoutes(razorpay) {
       if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
         return res.status(400).json({ success: false, error: "Missing fields" });
 
-      const expected = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      const expected = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest("hex");
 
-      if (expected !== razorpay_signature)
-        return res.status(400).json({ success: false, error: "Invalid signature" });
+      if (expected !== razorpay_signature) return res.status(400).json({ success: false, error: "Invalid signature" });
 
       const record = getPayment(razorpay_order_id);
       if (!record) return res.status(400).json({ success: false, error: "Unknown order" });
 
       const token = crypto.randomBytes(20).toString("hex");
 
-      updatePayment(razorpay_order_id, {
-        payment_id: razorpay_payment_id,
-        signature: razorpay_signature,
-        status: "verified",
-        token
-      });
+      updatePayment(razorpay_order_id, { payment_id: razorpay_payment_id, signature: razorpay_signature, status: "verified", token });
 
-      // ----------- Affiliate Tracking -----------
-      if (record.affiliate) {
-        const productPrice = PRODUCTS[record.product_id].price;
-        addAffiliateSale(record.affiliate, productPrice);
-      }
+      // Affiliate tracking
+      if (record.affiliate) addAffiliateSale(record.affiliate, PRODUCTS[record.product_id].price);
 
-      const apiBase = process.env.NODE_ENV === "production"
-        ? "" // assume same domain
-        : `http://localhost:${process.env.PORT || 5000}`;
+      const apiBase = process.env.NODE_ENV === "production" ? "" : `http://localhost:${process.env.PORT || 5000}`;
       const downloadUrl = `${apiBase}/api/payment/download/${record.product_id}?token=${token}`;
 
-      return res.json({ success: true, downloadUrl });
+      res.json({ success: true, data: { downloadUrl } });
     } catch (err) {
       console.error("Verify error:", err);
-      return res.status(500).json({ success: false, error: "Verification failed" });
+      res.status(500).json({ success: false, error: "Verification failed" });
     }
   });
 
@@ -127,10 +102,20 @@ export default function paymentRoutes(razorpay) {
       const SECURE_DIR = path.resolve(__dirname, "..", "secure-files");
       const filePath = path.join(SECURE_DIR, PRODUCTS[productId].file);
 
-      return res.download(filePath, PRODUCTS[productId].file);
+      res.download(filePath, PRODUCTS[productId].file);
     } catch (err) {
       console.error("Download error:", err);
-      return res.status(500).send("Failed to process download");
+      res.status(500).send("Failed to process download");
+    }
+  });
+
+  // ----------- GET PRODUCTS -----------
+  router.get("/products", (req, res) => {
+    try {
+      res.json({ success: true, data: Object.values(PRODUCTS) });
+    } catch (err) {
+      console.error("Products fetch error:", err);
+      res.status(500).json({ success: false, error: "Failed to fetch products" });
     }
   });
 

@@ -27,7 +27,6 @@ function App() {
             <>
               <HomePage onGoNow={handleGoNow} />
               <main ref={productRef}>
-                <EmailCapture />
                 <ProductPage />
               </main>
               <footer className="p-4 text-center text-gray-400">
