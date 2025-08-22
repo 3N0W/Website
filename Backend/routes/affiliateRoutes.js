@@ -1,8 +1,6 @@
 import express from "express";
 import { addAffiliate, addAffiliateSale, getAffiliates } from "../db.js";
 
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "supersecret";
-
 export default function affiliateRoutes() {
   const router = express.Router();
 
@@ -10,7 +8,14 @@ export default function affiliateRoutes() {
   router.use((req, res, next) => {
     const authHeader = req.headers.authorization || "";
     const token = req.headers["x-admin-token"] || authHeader.replace("Bearer ", "");
-    if (token !== ADMIN_TOKEN) return res.status(403).json({ success: false, error: "Forbidden" });
+
+    const expected = process.env.ADMIN_TOKEN || "supersecret";
+    console.log("🔑 Incoming admin token:", token);
+    console.log("🔑 Expected ADMIN_TOKEN:", expected);
+
+    if (token !== expected) {
+      return res.status(403).json({ success: false, error: "Forbidden" });
+    }
     next();
   });
 
@@ -29,7 +34,9 @@ export default function affiliateRoutes() {
   router.post("/create", (req, res) => {
     try {
       const { name } = req.body;
-      if (!name) return res.status(400).json({ success: false, error: "name is required" });
+      if (!name) {
+        return res.status(400).json({ success: false, error: "name is required" });
+      }
 
       const code = addAffiliate(name);
       res.status(201).json({ success: true, data: { code, name } });
@@ -44,11 +51,15 @@ export default function affiliateRoutes() {
     try {
       const { code, amount } = req.body;
       const parsedAmount = parseFloat(amount);
-      if (!code || isNaN(parsedAmount) || parsedAmount <= 0)
+
+      if (!code || isNaN(parsedAmount) || parsedAmount <= 0) {
         return res.status(400).json({ success: false, error: "code and valid amount required" });
+      }
 
       const updated = addAffiliateSale(code, parsedAmount);
-      if (!updated) return res.status(404).json({ success: false, error: "Affiliate not found" });
+      if (!updated) {
+        return res.status(404).json({ success: false, error: "Affiliate not found" });
+      }
 
       res.json({ success: true, message: "Sale recorded", data: updated });
     } catch (err) {

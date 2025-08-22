@@ -1,5 +1,8 @@
-import express from "express";
+
 import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 import cors from "cors";
 import Razorpay from "razorpay";
 
@@ -8,8 +11,8 @@ import productRoutes from "./product.js";
 import downloadRoutes from "./downloadRoutes.js";
 import affiliateRoutes from "./routes/affiliateRoutes.js";
 
-dotenv.config();
 
+console.log("ENV ADMIN_TOKEN:", process.env.ADMIN_TOKEN);
 const app = express();
 app.use(express.json());
 app.use(

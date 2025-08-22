@@ -1,7 +1,12 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const DB_FILE = path.resolve("./Backend/db.json");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ✅ db.json will be created in ~/zorgath/Backend/
+const DB_FILE = path.join(__dirname, "db.json");
 
 // Load or initialize DB
 let db = { affiliates: [], payments: [] };
@@ -62,4 +67,9 @@ export function getPayment(orderId) {
 
 export function getPaymentByToken(productId, token) {
   return db.payments.find((p) => p.product_id === productId && p.token === token);
+}
+
+// --- Get All Payments (for Admin) ---
+export function getAllPayments() {
+  return db.payments;
 }
