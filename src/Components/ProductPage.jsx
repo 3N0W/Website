@@ -1,100 +1,107 @@
-import express from "express";
-import crypto from "crypto";
-import path from "path";
-import { fileURLToPath } from "url";
-import { addPayment, updatePayment, getPayment, getPaymentByToken } from "../db.js";
+import React, { useState } from "react";
 
-export default function paymentRoutes(razorpay) {
-  const router = express.Router();
+export default function ProductPage() {
+  const [loading, setLoading] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+  const [downloadUrl, setDownloadUrl] = useState(null);
 
-  const PRODUCTS = {
-    prod_1: { id: "prod_1", name: "Product 1", price: 299, file: "product-1.pdf" },
-    prod_2: { id: "prod_2", name: "Product 2", price: 299, file: "product-2.pdf" },
+  const products = [
+    { id: "prod_1", name: "Product 1", price: 299 },
+    { id: "prod_2", name: "Product 2", price: 299 },
+  ];
+
+  // Create order on backend
+  const handleBuy = async (productId) => {
+    try {
+      setLoading(true);
+
+      const res = await fetch("http://localhost:5000/api/payment/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId,
+          buyer: { email: "test@example.com" },
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.id) throw new Error("Order not created");
+
+      setOrderId(data.id);
+
+      // Call Razorpay popup
+      openRazorpayCheckout(data, productId);
+    } catch (err) {
+      console.error("Buy error:", err);
+      alert("Failed to start payment");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // CREATE ORDER
-  router.post("/create-order", async (req, res) => {
-    try {
-      const { productId, buyer } = req.body || {};
-      if (!productId || !PRODUCTS[productId]) return res.status(400).json({ error: "Invalid productId" });
+  // Razorpay popup
+  const openRazorpayCheckout = (order, productId) => {
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID, // from .env
+      amount: order.amount,
+      currency: order.currency,
+      name: "Zorgath Store",
+      description: products.find((p) => p.id === productId).name,
+      order_id: order.id,
+      handler: async function (response) {
+        // Verify payment on backend
+        const verifyRes = await fetch("http://localhost:5000/api/payment/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(response),
+        });
 
-      const product = PRODUCTS[productId];
+        const verifyData = await verifyRes.json();
+        if (verifyData.success) {
+          setDownloadUrl(verifyData.downloadUrl);
+        } else {
+          alert("Payment verification failed");
+        }
+      },
+      prefill: { email: "test@example.com" },
+      theme: { color: "#3399cc" },
+    };
 
-      const order = await razorpay.orders.create({
-        amount: product.price * 100,
-        currency: "INR",
-        receipt: `rcpt_${Date.now()}_${productId}`,
-      });
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
 
-      addPayment({
-        order_id: order.id,
-        product_id: productId,
-        email: buyer?.email || "",
-        status: "pending",
-        created_at: new Date().toISOString(),
-      });
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Products</h1>
 
-      res.json({ id: order.id, amount: order.amount, currency: order.currency });
-    } catch (err) {
-      console.error("Create order error:", err);
-      res.status(500).json({ error: "Failed to create order" });
-    }
-  });
+      <div className="grid grid-cols-2 gap-6">
+        {products.map((p) => (
+          <div key={p.id} className="border p-4 rounded-lg shadow">
+            <h2 className="text-lg font-semibold">{p.name}</h2>
+            <p className="mb-2">₹{p.price}</p>
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => handleBuy(p.id)}
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Buy"}
+            </button>
+          </div>
+        ))}
+      </div>
 
-  // VERIFY PAYMENT
-  router.post("/verify", (req, res) => {
-    try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
-      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)
-        return res.status(400).json({ success: false, error: "Missing fields" });
-
-      const expected = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .digest("hex");
-
-      if (expected !== razorpay_signature) return res.status(400).json({ success: false, error: "Invalid signature" });
-
-      const record = getPayment(razorpay_order_id);
-      if (!record) return res.status(400).json({ success: false, error: "Unknown order" });
-
-      const token = crypto.randomBytes(20).toString("hex");
-      updatePayment(razorpay_order_id, { payment_id: razorpay_payment_id, signature: razorpay_signature, status: "verified", token });
-
-      const apiBase = process.env.NODE_ENV === "production" ? "" : `http://<YOUR_PHONE_IP>:${process.env.PORT || 5000}`;
-      const product = PRODUCTS[record.product_id];
-      const downloadUrl = `${apiBase}/api/payment/download/${record.product_id}?token=${token}`;
-
-      res.json({ success: true, downloadUrl });
-    } catch (err) {
-      console.error("Verify payment error:", err);
-      res.status(500).json({ success: false, error: "Verification failed" });
-    }
-  });
-
-  // DOWNLOAD FILE
-  router.get("/download/:productId", (req, res) => {
-    try {
-      const { productId } = req.params;
-      const { token } = req.query;
-      if (!productId || !token) return res.status(400).send("Missing params");
-
-      const record = getPaymentByToken(productId, token);
-      if (!record) return res.status(403).send("Invalid or expired link");
-
-      updatePayment(record.order_id, { token: "", status: "delivered" });
-
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const SECURE_DIR = path.resolve(__dirname, "..", "secure-files");
-      const filePath = path.join(SECURE_DIR, PRODUCTS[productId].file);
-
-      res.download(filePath, PRODUCTS[productId].file);
-    } catch (err) {
-      console.error("Download error:", err);
-      res.status(500).send("Failed to process download");
-    }
-  });
-
-  return router;
+      {orderId && <p className="mt-4">Order created: {orderId}</p>}
+      {downloadUrl && (
+        <div className="mt-4">
+          <a
+            href={downloadUrl}
+            className="bg-green-500 text-white px-4 py-2 rounded"
+          >
+            Download Product
+          </a>
+        </div>
+      )}
+    </div>
+  );
 }

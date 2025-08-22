@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 
 import HomePage from "./Components/Home";
 import ProductPage from "./Components/ProductPage";
-import Contact from "./Compoments/Contact";
+import Contact from "./Components/Contact";
 import RefundPolicy from "./Components/RefundPolicy";
 import Terms from "./Components/Terms";
 

@@ -63,27 +63,30 @@ export function getPaymentByToken(productId, token) {
 }
 
 // ----------- Affiliate API -----------
-export function addAffiliate(ref) {
+export function addAffiliate(name) {
   const data = loadAffiliates();
-  if (!data.find((a) => a.ref === ref)) {
-    data.push({ ref, sales: 0, revenue: 0 });
+  const code = Math.random().toString(36).substring(2, 8);
+  if (!data.find((a) => a.code === code)) {
+    data.push({ name, code, sales: 0, revenue: 0 });
   }
   saveAffiliates(data);
+  return code;
 }
 
-export function addAffiliateSale(ref, amount) {
+export function addAffiliateSale(code, amount) {
   const data = loadAffiliates();
-  const aff = data.find((a) => a.ref === ref);
+  const aff = data.find((a) => a.code === code);
   if (aff) {
     aff.sales++;
     aff.revenue += amount;
     saveAffiliates(data);
+    return aff;
   }
+  return null;
 }
 
-export function getAffiliateByCode(ref) {
-  const data = loadAffiliates();
-  return data.find((a) => a.ref === ref) || null;
+export function getAffiliateByCode(code) {
+  return loadAffiliates().find((a) => a.code === code) || null;
 }
 
 export function getAffiliates() {
