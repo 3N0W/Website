@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import "./App.css";
 
 import HomePage from "./Components/Home";
 import EmailCapture from "./Components/EmailCapture";
@@ -29,11 +30,12 @@ function App() {
               <main ref={productRef}>
                 <ProductPage />
               </main>
-              <footer className="p-4 text-center text-gray-400">
-                <Link to="/contact" className="mx-2">Contact Us</Link> | 
-                <Link to="/refund-policy" className="mx-2">Refund Policy</Link> | 
-                <Link to="/terms" className="mx-2">Terms & Conditions</Link>
-              </footer>
+              <footer className="footer">
+  <Link to="/contact">Contact Us</Link> | 
+  <Link to="/refund-policy">Refund Policy</Link> | 
+  <Link to="/terms">Terms & Conditions</Link>
+  <span>&copy; 2025 Snow Strom. All rights reserved.</span>
+</footer>
             </>
           }
         />
