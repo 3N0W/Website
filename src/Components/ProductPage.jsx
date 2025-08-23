@@ -18,8 +18,22 @@ export default function ProductPage() {
   const [downloadUrl, setDownloadUrl] = useState(null);
 
   const products = [
-    { id: "prod_1", name: "Product 1", price: 299, image: prod1Img },
-    { id: "prod_2", name: "Product 2", price: 299, image: prod2Img },
+    {
+      id: "prod_1",
+      name: "The Life of a Dot",
+      price: 299,
+      image: prod1Img,
+      description:
+        "Bibliography of a dot learning. The quote is Sequence of Consequences ",
+    },
+    {
+      id: "prod_2",
+      name: "WHY?",
+      price: 299,
+      image: prod2Img,
+      description:
+        "The philosophy of stabding against what we approve",
+    },
   ];
 
   const handleBuy = async (productId) => {
@@ -97,6 +111,7 @@ export default function ProductPage() {
             <img src={p.image} alt={p.name} className="product-image" />
             <h2 className="product-name">{p.name}</h2>
             <p className="product-price">₹{p.price}</p>
+            <p className="product-description">{p.description}</p>
             <button
               className="buy-button"
               onClick={() => handleBuy(p.id)}
