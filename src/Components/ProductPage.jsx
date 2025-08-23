@@ -5,16 +5,15 @@ import "./ProductPage.css";
 import prod1Img from "../Images/prod1.png";
 import prod2Img from "../Images/prod2.png";
 
-
 export default function ProductPage() {
   const [buyer, setBuyer] = useState(null);
   const [loading, setLoading] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
 
   const products = [
-  { id: "prod_1", name: "Product 1", price: 299, image: prod1Img },
-  { id: "prod_2", name: "Product 2", price: 299, image: prod2Img },
-];
+    { id: "prod_1", name: "Product 1", price: 299, image: prod1Img },
+    { id: "prod_2", name: "Product 2", price: 299, image: prod2Img },
+  ];
 
   const handleBuy = async (productId) => {
     if (!buyer) {
@@ -24,13 +23,22 @@ export default function ProductPage() {
 
     setLoading(true);
     try {
+      // Get affiliate code from localStorage
+      const affiliate = localStorage.getItem("affiliate_code");
+
       const res = await fetch("http://localhost:5000/api/payment/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, buyer }),
+        body: JSON.stringify({
+          productId,
+          buyer,
+          affiliate, // send affiliate to backend
+        }),
       });
+
       const data = await res.json();
       if (!data.id) throw new Error("Order not created");
+
       openRazorpayCheckout(data, productId);
     } catch (err) {
       console.error(err);
@@ -49,18 +57,25 @@ export default function ProductPage() {
       description: products.find((p) => p.id === productId).name,
       order_id: order.id,
       handler: async function (response) {
-        const verifyRes = await fetch("http://localhost:5000/api/payment/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(response),
-        });
-        const verifyData = await verifyRes.json();
-        if (verifyData.success) setDownloadUrl(verifyData.downloadUrl);
-        else alert("Payment verification failed");
+        try {
+          const verifyRes = await fetch("http://localhost:5000/api/payment/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(response),
+          });
+
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) setDownloadUrl(verifyData.downloadUrl);
+          else alert("Payment verification failed");
+        } catch (err) {
+          console.error(err);
+          alert("Payment verification failed");
+        }
       },
       prefill: { email: buyer.email, name: buyer.name },
       theme: { color: "#ff1a1a" },
     };
+
     new window.Razorpay(options).open();
   };
 

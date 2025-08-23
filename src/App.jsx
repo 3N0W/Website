@@ -8,7 +8,8 @@ import ProductPage from "./Components/ProductPage";
 import Contact from "./Components/Contact";
 import RefundPolicy from "./Components/RefundPolicy";
 import Terms from "./Components/Terms";
-import AdminDashboard from "./Components/Admin/AdminDashboard"; // <-- Correct path
+import AdminDashboard from "./Components/Admin/AdminDashboard";
+import AffiliateLanding from "./Components/AffiliateLanding"; // <-- New component
 
 function App() {
   const productRef = useRef(null);
@@ -22,6 +23,9 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Affiliate landing page */}
+        <Route path="/:code" element={<AffiliateLanding />} />
+
         {/* Home with products */}
         <Route
           path="/"
@@ -32,8 +36,8 @@ function App() {
                 <ProductPage />
               </main>
               <footer className="footer">
-                <Link to="/contact">Contact Us</Link> | 
-                <Link to="/refund-policy">Refund Policy</Link> | 
+                <Link to="/contact">Contact Us</Link> |{" "}
+                <Link to="/refund-policy">Refund Policy</Link> |{" "}
                 <Link to="/terms">Terms & Conditions</Link>
                 <span>&copy; 2025 Snow Strom. All rights reserved.</span>
               </footer>
