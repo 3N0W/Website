@@ -1,12 +1,19 @@
 // src/Components/ProductPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import EmailCapture from "./EmailCapture";
 import "./ProductPage.css";
 import prod1Img from "../Images/prod1.png";
 import prod2Img from "../Images/prod2.png";
 
 export default function ProductPage() {
-  const [buyer, setBuyer] = useState(null);
+  // Load buyer info from localStorage initially
+  const [buyer, setBuyer] = useState(() => {
+    const savedName = localStorage.getItem("buyer_name");
+    const savedEmail = localStorage.getItem("buyer_email");
+    if (savedName && savedEmail) return { name: savedName, email: savedEmail };
+    return null;
+  });
+
   const [loading, setLoading] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
 
@@ -23,7 +30,6 @@ export default function ProductPage() {
 
     setLoading(true);
     try {
-      // Get affiliate code from localStorage
       const affiliate = localStorage.getItem("affiliate_code");
 
       const res = await fetch("http://localhost:5000/api/payment/create-order", {
@@ -32,7 +38,7 @@ export default function ProductPage() {
         body: JSON.stringify({
           productId,
           buyer,
-          affiliate, // send affiliate to backend
+          affiliate,
         }),
       });
 
