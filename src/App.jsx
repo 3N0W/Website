@@ -8,8 +8,9 @@ import ProductPage from "./Components/ProductPage";
 import Contact from "./Components/Contact";
 import RefundPolicy from "./Components/RefundPolicy";
 import Terms from "./Components/Terms";
+import PrivacyPolicy from "./Components/PrivacyPolicy"; // <-- New policy page
 import AdminDashboard from "./Components/Admin/AdminDashboard";
-import AffiliateLanding from "./Components/AffiliateLanding"; // <-- New component
+import AffiliateLanding from "./Components/AffiliateLanding"; 
 
 function App() {
   const productRef = useRef(null);
@@ -38,8 +39,9 @@ function App() {
               <footer className="footer">
                 <Link to="/contact">Contact Us</Link> |{" "}
                 <Link to="/refund-policy">Refund Policy</Link> |{" "}
-                <Link to="/terms">Terms & Conditions</Link>
-                <span>&copy; 2025 Snow Strom. All rights reserved.</span>
+                <Link to="/terms">Terms & Conditions</Link> |{" "}
+                <Link to="/privacy-policy">Privacy Policy</Link>
+                <span> &copy; 2025 Snow Strom. All rights reserved.</span>
               </footer>
             </>
           }
@@ -52,6 +54,7 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} /> {/* <-- New route */}
       </Routes>
     </Router>
   );
