@@ -6,20 +6,21 @@ import prod1Img from "../Images/prod1.png";
 import prod2Img from "../Images/prod2.png";
 
 export default function ProductPage() {
+  // Buyer info from localStorage
   const [buyer, setBuyer] = useState(() => {
-    const savedName = localStorage.getItem("buyer_name");
-    const savedEmail = localStorage.getItem("buyer_email");
-    return savedName && savedEmail ? { name: savedName, email: savedEmail } : null;
+    const name = localStorage.getItem("buyer_name");
+    const email = localStorage.getItem("buyer_email");
+    return name && email ? { name, email } : null;
   });
 
-  const [loading, setLoading] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
+  const [loadingProduct, setLoadingProduct] = useState(null);
 
-  // auto-detect backend (localhost in dev, live in prod)
+  // Detect backend automatically
   const API_BASE =
     import.meta.env.MODE === "development"
       ? "http://localhost:5000"
-      : window.location.origin; // same domain in prod
+      : window.location.origin;
 
   const products = [
     {
@@ -38,15 +39,13 @@ export default function ProductPage() {
     },
   ];
 
+  // Handle Buy button
   const handleBuy = async (productId) => {
-    if (!buyer) {
-      alert("Enter your name and email first!");
-      return;
-    }
+    if (!buyer) return alert("Enter your name and email first!");
+    setLoadingProduct(productId);
 
-    setLoading(true);
     try {
-      const affiliate = localStorage.getItem("affiliate_code");
+      const affiliate = localStorage.getItem("affiliate_code") || "";
 
       const res = await fetch(`${API_BASE}/api/payment/create-order`, {
         method: "POST",
@@ -55,64 +54,58 @@ export default function ProductPage() {
       });
 
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Order not created");
+      if (!data.success) throw new Error(data.error || "Order creation failed");
 
       openRazorpayCheckout(data.data, productId);
     } catch (err) {
-      console.error(err);
+      console.error("Payment initiation failed:", err);
       alert("Payment initiation failed");
     } finally {
-      setLoading(false);
+      setLoadingProduct(null);
     }
   };
 
+  // Open Razorpay Checkout
   const openRazorpayCheckout = (order, productId) => {
     const product = products.find((p) => p.id === productId);
 
     const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID, // ✅ frontend key from .env
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: order.amount,
       currency: order.currency,
       name: "Zorgath Store",
       description: product.name,
       order_id: order.id,
-      handler: async function (response) {
+      prefill: { name: buyer.name, email: buyer.email },
+      theme: { color: "#ff1a1a" },
+      handler: async (response) => {
         try {
           const verifyRes = await fetch(`${API_BASE}/api/payment/verify`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(response),
           });
-
           const verifyData = await verifyRes.json();
-          if (verifyData.success) {
-            setDownloadUrl(verifyData.data.downloadUrl);
-          } else {
-            alert("Payment verification failed");
-          }
+          if (verifyData.success) setDownloadUrl(verifyData.data.downloadUrl);
+          else alert("Payment verification failed");
         } catch (err) {
-          console.error(err);
+          console.error("Payment verification failed:", err);
           alert("Payment verification failed");
         }
       },
-      prefill: { email: buyer.email, name: buyer.name },
-      theme: { color: "#ff1a1a" },
     };
 
-    console.log("🔑 Razorpay Key:", import.meta.env.VITE_RAZORPAY_KEY_ID); // debug
     const rzp = new window.Razorpay(options);
     rzp.open();
   };
 
-  // Ensure Razorpay script is loaded
+  // Load Razorpay script dynamically
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
     document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
+    return () => document.body.removeChild(script);
   }, []);
 
   return (
@@ -131,9 +124,9 @@ export default function ProductPage() {
             <button
               className="buy-button"
               onClick={() => handleBuy(p.id)}
-              disabled={loading || !buyer}
+              disabled={loadingProduct === p.id || !buyer}
             >
-              {loading ? "Processing..." : "Buy"}
+              {loadingProduct === p.id ? "Processing..." : "Buy"}
             </button>
           </div>
         ))}
@@ -141,7 +134,7 @@ export default function ProductPage() {
 
       {downloadUrl && (
         <div className="download-section">
-          <a href={downloadUrl} className="download-button">
+          <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="download-button">
             Download Product
           </a>
         </div>
