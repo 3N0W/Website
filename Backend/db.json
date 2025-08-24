@@ -21,6 +21,14 @@
       "status": "pending",
       "affiliate": null,
       "created_at": "2025-08-24T09:23:21.927Z"
+    },
+    {
+      "order_id": "order_R97ZXb1IvZRj4i",
+      "product_id": "prod_1",
+      "email": "snow@snowstrom.shop",
+      "status": "pending",
+      "affiliate": null,
+      "created_at": "2025-08-24T09:24:25.969Z"
     }
   ]
 }
