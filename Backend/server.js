@@ -1,4 +1,3 @@
-
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -11,13 +10,19 @@ import productRoutes from "./product.js";
 import downloadRoutes from "./downloadRoutes.js";
 import affiliateRoutes from "./routes/affiliateRoutes.js";
 
-
 console.log("ENV ADMIN_TOKEN:", process.env.ADMIN_TOKEN);
+
 const app = express();
 app.use(express.json());
+
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGIN || "*", // allow all or limit in production
+    origin: [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      process.env.ALLOWED_ORIGIN || "*",
+    ],
+    credentials: true,
   })
 );
 

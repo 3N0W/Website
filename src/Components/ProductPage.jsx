@@ -6,12 +6,10 @@ import prod1Img from "../Images/prod1.png";
 import prod2Img from "../Images/prod2.png";
 
 export default function ProductPage() {
-  // Load buyer info from localStorage initially
   const [buyer, setBuyer] = useState(() => {
     const savedName = localStorage.getItem("buyer_name");
     const savedEmail = localStorage.getItem("buyer_email");
-    if (savedName && savedEmail) return { name: savedName, email: savedEmail };
-    return null;
+    return savedName && savedEmail ? { name: savedName, email: savedEmail } : null;
   });
 
   const [loading, setLoading] = useState(false);
@@ -23,16 +21,14 @@ export default function ProductPage() {
       name: "The Life of a Dot",
       price: 299,
       image: prod1Img,
-      description:
-        "Bibliography of a dot learning. The quote is Sequence of Consequences ",
+      description: "Bibliography of a dot learning. The quote is Sequence of Consequences",
     },
     {
       id: "prod_2",
       name: "WHY?",
       price: 299,
       image: prod2Img,
-      description:
-        "The philosophy of stabding against what we approve",
+      description: "The philosophy of standing against what we approve",
     },
   ];
 
@@ -49,17 +45,13 @@ export default function ProductPage() {
       const res = await fetch("http://localhost:5000/api/payment/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId,
-          buyer,
-          affiliate,
-        }),
+        body: JSON.stringify({ productId, buyer, affiliate }),
       });
 
       const data = await res.json();
-      if (!data.id) throw new Error("Order not created");
+      if (!data.success) throw new Error(data.error || "Order not created");
 
-      openRazorpayCheckout(data, productId);
+      openRazorpayCheckout(data.data, productId); // FIX: use data.data
     } catch (err) {
       console.error(err);
       alert("Payment initiation failed");
@@ -69,12 +61,14 @@ export default function ProductPage() {
   };
 
   const openRazorpayCheckout = (order, productId) => {
+    const product = products.find((p) => p.id === productId);
+
     const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID, // live/test key from .env
       amount: order.amount,
       currency: order.currency,
       name: "Zorgath Store",
-      description: products.find((p) => p.id === productId).name,
+      description: product.name,
       order_id: order.id,
       handler: async function (response) {
         try {
@@ -85,8 +79,11 @@ export default function ProductPage() {
           });
 
           const verifyData = await verifyRes.json();
-          if (verifyData.success) setDownloadUrl(verifyData.downloadUrl);
-          else alert("Payment verification failed");
+          if (verifyData.success) {
+            setDownloadUrl(verifyData.data.downloadUrl); // FIX: nested inside data
+          } else {
+            alert("Payment verification failed");
+          }
         } catch (err) {
           console.error(err);
           alert("Payment verification failed");
@@ -96,8 +93,20 @@ export default function ProductPage() {
       theme: { color: "#ff1a1a" },
     };
 
-    new window.Razorpay(options).open();
+    const rzp = new window.Razorpay(options);
+    rzp.open();
   };
+
+  // Ensure Razorpay script is loaded
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   return (
     <div className="product-page-root">
