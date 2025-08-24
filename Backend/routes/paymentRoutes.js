@@ -119,15 +119,13 @@ export default function paymentRoutes(razorpay) {
       res.status(500).json({ success: false, error: "Failed to fetch products" });
     }
   });
- // ----------- GET all payments (admin) -----------
+
+  // ----------- GET all payments (admin) -----------
   router.get("/", (req, res) => {
     try {
       const authHeader = req.headers.authorization || "";
       const token = req.headers["x-admin-token"] || authHeader.replace("Bearer ", "");
       const expected = process.env.ADMIN_TOKEN || "supersecret";
-
-      console.log("🔑 Incoming admin token:", token);
-      console.log("🔑 Expected ADMIN_TOKEN:", expected);
 
       if (token !== expected) {
         return res.status(403).json({ success: false, error: "Forbidden" });

@@ -15,6 +15,12 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState(null);
 
+  // auto-detect backend (localhost in dev, live in prod)
+  const API_BASE =
+    import.meta.env.MODE === "development"
+      ? "http://localhost:5000"
+      : window.location.origin; // same domain in prod
+
   const products = [
     {
       id: "prod_1",
@@ -42,7 +48,7 @@ export default function ProductPage() {
     try {
       const affiliate = localStorage.getItem("affiliate_code");
 
-      const res = await fetch("http://localhost:5000/api/payment/create-order", {
+      const res = await fetch(`${API_BASE}/api/payment/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId, buyer, affiliate }),
@@ -51,7 +57,7 @@ export default function ProductPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Order not created");
 
-      openRazorpayCheckout(data.data, productId); // FIX: use data.data
+      openRazorpayCheckout(data.data, productId);
     } catch (err) {
       console.error(err);
       alert("Payment initiation failed");
@@ -64,7 +70,7 @@ export default function ProductPage() {
     const product = products.find((p) => p.id === productId);
 
     const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID, // live/test key from .env
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID, // ✅ frontend key from .env
       amount: order.amount,
       currency: order.currency,
       name: "Zorgath Store",
@@ -72,7 +78,7 @@ export default function ProductPage() {
       order_id: order.id,
       handler: async function (response) {
         try {
-          const verifyRes = await fetch("http://localhost:5000/api/payment/verify", {
+          const verifyRes = await fetch(`${API_BASE}/api/payment/verify`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(response),
@@ -80,7 +86,7 @@ export default function ProductPage() {
 
           const verifyData = await verifyRes.json();
           if (verifyData.success) {
-            setDownloadUrl(verifyData.data.downloadUrl); // FIX: nested inside data
+            setDownloadUrl(verifyData.data.downloadUrl);
           } else {
             alert("Payment verification failed");
           }
@@ -93,6 +99,7 @@ export default function ProductPage() {
       theme: { color: "#ff1a1a" },
     };
 
+    console.log("🔑 Razorpay Key:", import.meta.env.VITE_RAZORPAY_KEY_ID); // debug
     const rzp = new window.Razorpay(options);
     rzp.open();
   };
