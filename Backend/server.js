@@ -31,7 +31,9 @@ const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
-
+console.log("🟢 Using Razorpay Keys:");
+console.log("  key_id:", process.env.RAZORPAY_KEY_ID);
+console.log("  key_secret:", process.env.RAZORPAY_KEY_SECRET ? "[HIDDEN]" : "❌ MISSING");
 // ----------- Routes -----------
 app.use("/api/payment", paymentRoutes(razorpay)); // pass Razorpay instance
 app.use("/api/products", productRoutes);          // products list
