@@ -53,7 +53,7 @@ const PrivacyPolicy = () => {
 
       <h2>7. Contact Us</h2>
       <p>
-        If you have questions, reach out at: <strong>support@zorgath.com</strong>
+        If you have questions, reach out at: <strong>snow@snowstrom.shop</strong>
       </p>
     </div>
   );
