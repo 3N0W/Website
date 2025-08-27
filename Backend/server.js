@@ -9,14 +9,23 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import productRoutes from "./product.js";
 import downloadRoutes from "./downloadRoutes.js";
 import affiliateRoutes from "./routes/affiliateRoutes.js";
+import emailCaptureRoutes from "./routes/emailCaptureRoutes.js"; // <-- email capture
 
-// Check essential env variables
-const REQUIRED_ENVS = ["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "DOWNLOAD_JWT_SECRET", "ALLOWED_ORIGIN"];
+// Validate essential env variables
+const REQUIRED_ENVS = [
+  "RAZORPAY_KEY_ID",
+  "RAZORPAY_KEY_SECRET",
+  "DOWNLOAD_JWT_SECRET",
+  "ALLOWED_ORIGIN",
+  "SMTP_EMAIL",
+  "SMTP_PASSWORD",
+  "FRONTEND_URL"
+];
 REQUIRED_ENVS.forEach((v) => {
   if (!process.env[v]) throw new Error(`${v} is not defined in .env`);
 });
 
-console.log("Loaded env variables successfully.");
+console.log("✅ All required env variables loaded.");
 
 // Initialize Express
 const app = express();
@@ -40,7 +49,8 @@ const razorpay = new Razorpay({
 app.use("/api/payment", paymentRoutes(razorpay));
 app.use("/api/products", productRoutes);
 app.use("/api/download", downloadRoutes);
-app.use("/api/affiliate", affiliateRoutes());
+app.use("/api/affiliate", affiliateRoutes);
+app.use("/api/email-capture", emailCaptureRoutes); // <-- email capture route
 
 // Serve static images
 app.use("/Images", express.static("src/Images"));
